@@ -33,5 +33,5 @@ build/
 .vscode/
 
 ###  CUSTOM 密钥 ###
-!/src/main/resources/application-local.yml
-!/src/main/java/com/swl/baoaiagent/demo/invoke/TestApiKey.java
+/src/main/resources/application-local.yml
+/src/main/java/com/swl/baoaiagent/demo/invoke/TestApiKey.java
