@@ -1,5 +1,7 @@
 package com.swl.baoaiagent.app;
 
+import com.swl.baoaiagent.advisor.MyLoggerAdvisor;
+import com.swl.baoaiagent.advisor.ReReadingAdvisor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
@@ -32,7 +34,9 @@ public class LoveApp {
                 .defaultSystem(SYSTEM_PROMPT)
                 .defaultAdvisors(
                         // new MessageChatMemoryAdvisor(chatMemory) 直接构造方法：不能配置一些参数，不灵活
-                        MessageChatMemoryAdvisor.builder(chatMemory).build() //链式构造
+                        MessageChatMemoryAdvisor.builder(chatMemory).build(), //链式构造
+                        new MyLoggerAdvisor(),
+                        new ReReadingAdvisor()
                 )
                 .build();
     }
@@ -48,7 +52,7 @@ public class LoveApp {
                 .call()
                 .chatResponse();
         String content = chatResponse.getResult().getOutput().getText();
-        log.info("content:{}",content);
+        //log.info("content:{}",content);
         return content;
     }
 
