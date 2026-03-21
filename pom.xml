@@ -24,6 +24,14 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
+<!--        支持结构化输出-->
+        <dependency>
+            <groupId>com.github.victools</groupId>
+            <artifactId>jsonschema-generator</artifactId>
+            <version>4.38.0</version>
+        </dependency>
+
+
         <!--        LangChain4j-->
         <dependency>
             <groupId>dev.langchain4j</groupId>
