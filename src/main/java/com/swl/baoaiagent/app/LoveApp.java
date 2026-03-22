@@ -2,6 +2,7 @@ package com.swl.baoaiagent.app;
 
 import com.swl.baoaiagent.advisor.MyLoggerAdvisor;
 import com.swl.baoaiagent.advisor.ReReadingAdvisor;
+import com.swl.baoaiagent.chatmemory.FileBasedChatMemory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
@@ -30,8 +31,13 @@ public class LoveApp {
      * @param deshscopeChatModel
      */
     public LoveApp(ChatModel deshscopeChatModel) {
-        //初始化基于内存的对话记忆
-        ChatMemory chatMemory = new InMemoryChatMemory();
+        //初始化基于文件的对话记忆
+        String fileDir = System.getProperty("user.dir") + "/tmp/chat-memory";
+        ChatMemory chatMemory  = new FileBasedChatMemory(fileDir);
+
+        /*//初始化基于内存的对话记忆
+        ChatMemory chatMemory = new InMemoryChatMemory();*/
+
         this.chatClient = ChatClient.builder(deshscopeChatModel)
                 .defaultSystem(SYSTEM_PROMPT)
                 .defaultAdvisors(
