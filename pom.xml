@@ -38,7 +38,7 @@
             <version>5.6.2</version>
         </dependency>
 
-        <!--        LangChain4j-->
+<!--        LangChain4j-->
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-community-dashscope</artifactId>
@@ -46,28 +46,20 @@
             <scope>compile</scope>
         </dependency>
 
-        <!-- Spring AI Alibaba Agent Framework -->
-        <!--        <dependency>-->
-        <!--            <groupId>com.alibaba.cloud.ai</groupId>-->
-        <!--            <artifactId>spring-ai-alibaba-agent-framework</artifactId>-->
-        <!--            <version>1.1.2.0</version>-->
-        <!--        </dependency>-->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-            <version>3.3.4</version>
-        </dependency>
-        <!-- DashScope ChatModel 支持 -->
-        <!--        <dependency>-->
-        <!--            <groupId>com.alibaba.cloud.ai</groupId>-->
-        <!--            <artifactId>spring-ai-alibaba-starter-dashscope</artifactId>-->
-        <!--            <version>1.1.2.0</version>-->
-        <!--        </dependency>-->
+<!--        spring ai 整合alibaba 启动器-->
         <dependency>
             <groupId>com.alibaba.cloud.ai</groupId>
             <artifactId>spring-ai-alibaba-starter</artifactId>
             <version>1.0.0-M6.1</version>
         </dependency>
+
+        <!-- spring ai 整合markdown文档读取器 -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-markdown-document-reader</artifactId>
+            <version>1.0.0-M6</version>
+        </dependency>
+
         <!-- 阿里云百炼，灵积大模型服务 -->
         <dependency>
             <groupId>com.alibaba</groupId>
@@ -137,5 +129,17 @@
             </plugin>
         </plugins>
     </build>
+
+    <repositories>
+        <repository>
+            <id>spring-milestones</id>
+            <name>Spring Milestones</name>
+            <url>https://repo.spring.io/milestone</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
 
 </project>
