@@ -3,6 +3,8 @@ package com.swl.baoaiagent.app;
 import com.swl.baoaiagent.advisor.MyLoggerAdvisor;
 import com.swl.baoaiagent.advisor.ReReadingAdvisor;
 import com.swl.baoaiagent.chatmemory.FileBasedChatMemory;
+import com.swl.baoaiagent.rag.LoveAppRagCustomAdvisorFactory;
+import com.swl.baoaiagent.rag.QueryRewriter;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -31,12 +33,18 @@ public class LoveApp {
     //Rag 内存向量数据库
     @Resource
     private VectorStore loveAppVectorStore;
+
     //Rag 顾问
     @Resource
     private Advisor loveAppRagCloudAdvisor;
+
     //Rag PgVector向量数据库
 //    @Resource
 //    private VectorStore pgVectorVectorStore;
+
+    //Rag 查询重写器
+    @Resource
+    private QueryRewriter queryRewriter;
 
     /**
      * 构造函数
@@ -98,16 +106,22 @@ public class LoveApp {
      * 和RAG知识库进行问答
      */
     public String doChatWithRag(String message,String chatId){
+        //查询重写
+        String reMessage = queryRewriter.doQueryRewrite(message);
+
         ChatResponse chatResponse = chatClient.prompt()
-                .user(message)
+                .user(reMessage)
                 .advisors(spec -> spec.param(CHAT_MEMORY_CONVERSATION_ID_KEY,chatId)
                         .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY,10))
                 //应用RAG知识库问答(基于内存向量数据库)
-                .advisors(new QuestionAnswerAdvisor(loveAppVectorStore))
+//                .advisors(new QuestionAnswerAdvisor(loveAppVectorStore))
                 //应用RAG检索增强服务（基于云知识库）
 //                .advisors(loveAppRagCloudAdvisor)
                 //应用RAG检索增强服务(基于PgVector向量数据库)
 //                .advisors(new QuestionAnswerAdvisor(pgVectorVectorStore))
+                .advisors(
+                        LoveAppRagCustomAdvisorFactory.createLoveAppRagCustomAdvisor(loveAppVectorStore,"已婚")
+                )
                 .call()
                 .chatResponse();
         String content = chatResponse.getResult().getOutput().getText();
