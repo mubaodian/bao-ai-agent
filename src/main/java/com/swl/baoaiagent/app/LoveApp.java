@@ -35,8 +35,8 @@ public class LoveApp {
     @Resource
     private Advisor loveAppRagCloudAdvisor;
     //Rag PgVector向量数据库
-    @Resource
-    private VectorStore pgVectorVectorStore;
+//    @Resource
+//    private VectorStore pgVectorVectorStore;
 
     /**
      * 构造函数
@@ -103,11 +103,11 @@ public class LoveApp {
                 .advisors(spec -> spec.param(CHAT_MEMORY_CONVERSATION_ID_KEY,chatId)
                         .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY,10))
                 //应用RAG知识库问答(基于内存向量数据库)
-//                .advisors(new QuestionAnswerAdvisor(loveAppVectorStore))
+                .advisors(new QuestionAnswerAdvisor(loveAppVectorStore))
                 //应用RAG检索增强服务（基于云知识库）
 //                .advisors(loveAppRagCloudAdvisor)
                 //应用RAG检索增强服务(基于PgVector向量数据库)
-                .advisors(new QuestionAnswerAdvisor(pgVectorVectorStore))
+//                .advisors(new QuestionAnswerAdvisor(pgVectorVectorStore))
                 .call()
                 .chatResponse();
         String content = chatResponse.getResult().getOutput().getText();
