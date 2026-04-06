@@ -34,7 +34,8 @@ public class LoveAppRagCustomAdvisorFactory {
                 .build();
 
         return RetrievalAugmentationAdvisor.builder()
-                .documentRetriever(documentRetriever)
+                .documentRetriever(documentRetriever) //文档检索器
+                .queryAugmenter(LoveAppContextualQueryAugumneterFactory.createInstance()) //查询增强器
                 .build();
     }
 }
