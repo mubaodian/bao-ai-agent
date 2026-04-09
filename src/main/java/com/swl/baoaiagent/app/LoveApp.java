@@ -5,6 +5,7 @@ import com.swl.baoaiagent.advisor.ReReadingAdvisor;
 import com.swl.baoaiagent.chatmemory.FileBasedChatMemory;
 import com.swl.baoaiagent.rag.LoveAppRagCustomAdvisorFactory;
 import com.swl.baoaiagent.rag.QueryRewriter;
+import com.swl.baoaiagent.tools.ToolRegistration;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -45,6 +46,10 @@ public class LoveApp {
     //Rag 查询重写器
     @Resource
     private QueryRewriter queryRewriter;
+
+    //工具注册类
+    @Resource
+    private ToolRegistration toolRegistration;
 
     /**
      * 构造函数
@@ -114,18 +119,37 @@ public class LoveApp {
                 .advisors(spec -> spec.param(CHAT_MEMORY_CONVERSATION_ID_KEY,chatId)
                         .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY,10))
                 //应用RAG知识库问答(基于内存向量数据库)
-//                .advisors(new QuestionAnswerAdvisor(loveAppVectorStore))
+                .advisors(new QuestionAnswerAdvisor(loveAppVectorStore))
                 //应用RAG检索增强服务（基于云知识库）
 //                .advisors(loveAppRagCloudAdvisor)
                 //应用RAG检索增强服务(基于PgVector向量数据库)
 //                .advisors(new QuestionAnswerAdvisor(pgVectorVectorStore))
                 //应用自定义的RAG 检索增强服务(文档检索器 + 上下文查询增强器)
-                .advisors(
-                        LoveAppRagCustomAdvisorFactory.createLoveAppRagCustomAdvisor(loveAppVectorStore,"单身")
-                )
+//                .advisors(
+//                        LoveAppRagCustomAdvisorFactory.createLoveAppRagCustomAdvisor(loveAppVectorStore,"单身")
+//                )
+                .call()
+                .chatResponse();
+        String content = chatResponse.getResult().getOutput().getText();
+        return content;
+    }
+
+    /**
+     * AI 工具调用
+     * @param message
+     * @param chatId
+     * @return
+     */
+    public String doChatWithTool(String message,String chatId){
+        ChatResponse chatResponse = chatClient.prompt()
+                .user(message)
+                .advisors(spec -> spec.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId)
+                        .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10))
+                .tools(toolRegistration.allTools())
                 .call()
                 .chatResponse();
         String content = chatResponse.getResult().getOutput().getText();
         return content;
     }
 }
+
