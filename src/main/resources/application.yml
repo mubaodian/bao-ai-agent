@@ -1,6 +1,12 @@
 spring:
   application:
     name: baodian-ai-agent
+  ai:
+    mcp:
+      client:
+        request-timeout: 30s
+        stdio:
+          servers-configuration: classpath:mcp-servers.json
   profiles:
     active: local
 server:
