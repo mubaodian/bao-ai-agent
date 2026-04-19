@@ -11,7 +11,7 @@ public class HttpAiInvoke {
 
     public static void main(String[] args) {
         // 设置 API 密钥
-        String apiKey = TestApiKey.API_KEY;
+        String apiKey = System.getenv("DB_TEST_API_KEY");
 
         if (apiKey == null || apiKey.isEmpty()) {
             System.err.println("错误：DASHSCOPE_API_KEY 环境变量未设置");

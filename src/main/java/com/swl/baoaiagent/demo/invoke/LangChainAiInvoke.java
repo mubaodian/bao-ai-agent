@@ -6,7 +6,7 @@ import dev.langchain4j.model.chat.ChatModel;
 public class LangChainAiInvoke {
     public static void main(String[] args) {
         ChatModel qwenChatModel = QwenChatModel.builder()
-                .apiKey(TestApiKey.API_KEY)
+                .apiKey(System.getenv("DB_TEST_API_KEY"))
                 .modelName("qwen-max")
                 .build();
 
