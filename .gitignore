@@ -37,3 +37,4 @@ build/
 /src/main/java/com/swl/baoaiagent/demo/invoke/TestApiKey.java
 tmp
 /src/main/resources/mcp-servers.json
+/src/main/resources/application-prod.yml
