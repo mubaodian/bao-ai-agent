@@ -2,6 +2,45 @@ import { buildApiUrl } from './api'
 
 const DONE_MARKERS = new Set(['[DONE]', 'DONE', 'done'])
 
+const KNOWN_EVENT_TYPES = new Set([
+  'tool_call',
+  'tool_result',
+  'answer',
+  'notice',
+  'error',
+  'done',
+])
+
+// 结构优先：Manus 路径下发的是单行 JSON 事件；Love 路径仍是纯文本。
+function parseAgentEvent(raw) {
+  if (typeof raw !== 'string') {
+    return null
+  }
+
+  const trimmed = raw.trim()
+
+  if (!trimmed || (trimmed[0] !== '{' && trimmed[0] !== '[')) {
+    return null
+  }
+
+  try {
+    const parsed = JSON.parse(trimmed)
+
+    if (
+      parsed &&
+      typeof parsed === 'object' &&
+      !Array.isArray(parsed) &&
+      KNOWN_EVENT_TYPES.has(parsed.type)
+    ) {
+      return parsed
+    }
+  } catch {
+    return null
+  }
+
+  return null
+}
+
 function extractText(payload) {
   if (payload == null) {
     return ''
@@ -92,6 +131,20 @@ export function openSseStream(url, params, handlers = {}) {
 
   source.onmessage = (event) => {
     if (closed) {
+      return
+    }
+
+    const agentEvent = parseAgentEvent(event.data)
+
+    if (agentEvent) {
+      if (agentEvent.type === 'done') {
+        doneReceived = true
+        handlers.onDone?.()
+        close()
+        return
+      }
+
+      handlers.onEvent?.(agentEvent)
       return
     }
 

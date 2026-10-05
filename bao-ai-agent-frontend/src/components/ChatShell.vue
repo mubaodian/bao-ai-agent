@@ -262,6 +262,34 @@ function createAssistantMessage() {
   })
 }
 
+// 结构化事件 -> 时间线消息（按到达顺序依次排列，不走打字机队列）
+function handleAgentEvent(event) {
+  const kind = event.type
+
+  if (!['tool_call', 'tool_result', 'answer', 'notice', 'error'].includes(kind)) {
+    return
+  }
+
+  hasAssistantOutput = true
+
+  messages.value.push(
+    reactive({
+      id: `event-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+      role: 'assistant',
+      kind,
+      content: event.text ?? '',
+      label: event.label ?? '',
+      tool: event.tool ?? '',
+      detail: event.detail ?? '',
+      truncated: Boolean(event.truncated),
+      expanded: false,
+      step: event.step ?? null,
+    })
+  )
+
+  scrollToBottom()
+}
+
 function resetConversation() {
   streamCloser.value?.()
   streamCloser.value = null
@@ -316,6 +344,9 @@ function submitMessage() {
   }
 
   streamCloser.value = openSseStream(props.endpoint, params, {
+    onEvent(event) {
+      handleAgentEvent(event)
+    },
     onChunk(chunk) {
       hasAssistantOutput = true
 
@@ -327,6 +358,13 @@ function submitMessage() {
       enqueueAssistantText(assistantMessage, chunk)
     },
     onDone() {
+      // 事件模式下已有输出：直接收尾，不再追加占位气泡
+      if (props.assistantBubbleMode === 'per-event' && hasAssistantOutput) {
+        finishStreaming()
+        clearTypingState()
+        return
+      }
+
       const fallbackTarget =
         assistantMessage ?? (hasAssistantOutput ? null : createAssistantMessage())
 
@@ -440,14 +478,46 @@ watch(
             v-for="message in messages"
             :key="message.id"
             class="message-row"
-            :class="message.role"
+            :class="[message.role, message.kind ? `kind-${message.kind}` : '']"
           >
-            <div class="message-bubble">
-              <span class="message-role">
-                {{ message.role === 'user' ? '我' : 'AI' }}
-              </span>
-              <p>{{ message.content }}</p>
-            </div>
+            <template v-if="message.kind === 'tool_call'">
+              <div class="tool-card">
+                <span class="tool-chip">{{ message.label }}</span>
+                <span class="tool-text">{{ message.content }}</span>
+              </div>
+            </template>
+
+            <template v-else-if="message.kind === 'tool_result'">
+              <div class="tool-card">
+                <span class="tool-chip">{{ message.label }}</span>
+                <span class="tool-text">{{ message.content }}</span>
+                <button
+                  v-if="message.detail"
+                  class="tool-toggle"
+                  type="button"
+                  @click="message.expanded = !message.expanded"
+                >
+                  {{ message.expanded ? '收起详情' : '查看详情' }}
+                </button>
+                <template v-if="message.expanded">
+                  <pre class="tool-detail">{{ message.detail }}</pre>
+                  <span v-if="message.truncated" class="tool-truncated">…（内容已截断）</span>
+                </template>
+              </div>
+            </template>
+
+            <template v-else-if="message.kind === 'notice' || message.kind === 'error'">
+              <div class="message-status" :class="message.kind">{{ message.content }}</div>
+            </template>
+
+            <template v-else>
+              <div class="message-bubble">
+                <span class="message-role">
+                  {{ message.role === 'user' ? '我' : 'AI' }}
+                </span>
+                <p>{{ message.content }}</p>
+              </div>
+            </template>
           </article>
         </div>
 
