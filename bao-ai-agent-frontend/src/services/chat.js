@@ -71,80 +71,11 @@ function normalizeChunk(raw) {
   }
 }
 
-function emitNormalizedChunk(raw, handlers) {
-  const chunk = normalizeChunk(raw)
-
-  if (!chunk) {
-    return false
-  }
-
-  if (chunk.done) {
-    handlers.onDone?.()
-    return true
-  }
-
-  handlers.onChunk?.(chunk.text)
-  return false
-}
-
-function parseEventBlock(eventBlock) {
-  const lines = eventBlock.split(/\r?\n/)
-  const dataLines = []
-
-  for (const line of lines) {
-    if (!line || line.startsWith(':')) {
-      continue
-    }
-
-    if (line.startsWith('data:')) {
-      dataLines.push(line.slice(5).trimStart())
-    }
-  }
-
-  return dataLines.join('\n')
-}
-
-function consumeEventBlocks(buffer, handlers, flushAll = false) {
-  let rest = buffer
-
-  while (rest.length > 0) {
-    const match = rest.match(/\r?\n\r?\n/)
-
-    if (!match || match.index == null) {
-      break
-    }
-
-    const eventBlock = rest.slice(0, match.index)
-    rest = rest.slice(match.index + match[0].length)
-
-    const data = parseEventBlock(eventBlock)
-
-    if (data && emitNormalizedChunk(data, handlers)) {
-      return { rest: '', ended: true }
-    }
-  }
-
-  if (flushAll) {
-    const pending = rest.trim()
-
-    if (pending) {
-      const data = parseEventBlock(pending) || pending
-
-      if (emitNormalizedChunk(data, handlers)) {
-        return { rest: '', ended: true }
-      }
-    }
-
-    return { rest: '', ended: false }
-  }
-
-  return { rest, ended: false }
-}
-
 export function openSseStream(url, params, handlers = {}) {
-  const controller = new AbortController()
-  const decoder = new TextDecoder('utf-8')
+  const source = new EventSource(buildApiUrl(url, params))
   let closed = false
+  let opened = false
+  let doneReceived = false
 
   const close = () => {
     if (closed) {
@@ -152,70 +83,54 @@ export function openSseStream(url, params, handlers = {}) {
     }
 
     closed = true
-    controller.abort()
+    source.close()
   }
 
-  ;(async () => {
-    let buffer = ''
+  source.onopen = () => {
+    opened = true
+  }
 
-    try {
-      const response = await fetch(buildApiUrl(url, params), {
-        method: 'GET',
-        headers: {
-          Accept: 'text/event-stream',
-        },
-        cache: 'no-store',
-        signal: controller.signal,
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`)
-      }
-
-      if (!response.body) {
-        throw new Error('ReadableStream not supported')
-      }
-
-      const reader = response.body.getReader()
-
-      while (!closed) {
-        const { value, done } = await reader.read()
-
-        if (done) {
-          break
-        }
-
-        buffer += decoder.decode(value, { stream: true })
-
-        const result = consumeEventBlocks(buffer, handlers)
-        buffer = result.rest
-
-        if (result.ended) {
-          close()
-          return
-        }
-      }
-
-      buffer += decoder.decode()
-
-      if (!closed) {
-        const result = consumeEventBlocks(buffer, handlers, true)
-
-        if (result.ended) {
-          close()
-          return
-        }
-
-        handlers.onDone?.()
-      }
-    } catch (error) {
-      if (closed || error?.name === 'AbortError') {
-        return
-      }
-
-      handlers.onError?.(error)
+  source.onmessage = (event) => {
+    if (closed) {
+      return
     }
-  })()
+
+    const chunk = normalizeChunk(event.data)
+
+    if (!chunk) {
+      return
+    }
+
+    if (chunk.done) {
+      doneReceived = true
+      handlers.onDone?.()
+      close()
+      return
+    }
+
+    handlers.onChunk?.(chunk.text)
+  }
+
+  source.onerror = () => {
+    if (closed) {
+      return
+    }
+
+    close()
+
+    if (doneReceived) {
+      return
+    }
+
+    // EventSource 也会在服务端正常结束流时触发 error。
+    // 若连接从未建立，视为连接失败；否则按正常结束处理。
+    if (!opened) {
+      handlers.onError?.(new Error('SSE connection failed'))
+      return
+    }
+
+    handlers.onDone?.()
+  }
 
   return close
 }

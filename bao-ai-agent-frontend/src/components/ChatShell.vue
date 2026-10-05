@@ -6,6 +6,7 @@ import SiteFooter from './SiteFooter.vue'
 
 const TYPING_INTERVAL_MS = 18
 const TYPING_BATCH_SIZE = 2
+const AUTO_SCROLL_THRESHOLD = 48
 
 const props = defineProps({
   title: {
@@ -59,6 +60,7 @@ let typingTimer = null
 let typingQueue = []
 let pendingFinalizer = null
 let hasAssistantOutput = false
+let autoScroll = true
 
 const themeMap = {
   rose: {
@@ -127,7 +129,28 @@ function clearTypingState() {
   isPaused.value = false
 }
 
-function scrollToBottom() {
+function isNearBottom(container) {
+  return (
+    container.scrollHeight - container.scrollTop - container.clientHeight <=
+    AUTO_SCROLL_THRESHOLD
+  )
+}
+
+function handleMessageScroll() {
+  const container = messageListRef.value
+
+  if (!container) {
+    return
+  }
+
+  autoScroll = isNearBottom(container)
+}
+
+function scrollToBottom(force = false) {
+  if (!force && !autoScroll) {
+    return
+  }
+
   nextTick(() => {
     const container = messageListRef.value
 
@@ -155,6 +178,12 @@ function flushTypingQueue() {
   const currentTask = typingQueue[0]
 
   if (currentTask) {
+    if (!currentTask.target) {
+      const target = createAssistantMessage()
+      currentTask.target = target
+      messages.value.push(target)
+    }
+
     const nextChunk = currentTask.text.slice(0, TYPING_BATCH_SIZE)
     currentTask.text = currentTask.text.slice(TYPING_BATCH_SIZE)
     currentTask.target.content += nextChunk
@@ -239,6 +268,8 @@ function resetConversation() {
   clearTypingState()
   isStreaming.value = false
   messages.value = [createAssistantIntro()]
+  autoScroll = true
+  scrollToBottom(true)
 
   if (props.useChatId) {
     chatId.value = createSessionId()
@@ -273,6 +304,7 @@ function submitMessage() {
   isStreaming.value = true
   isPaused.value = false
   hasAssistantOutput = false
+  autoScroll = true
 
   const params = {
     [props.promptKey]: content,
@@ -288,9 +320,7 @@ function submitMessage() {
       hasAssistantOutput = true
 
       if (props.assistantBubbleMode === 'per-event') {
-        const stepMessage = createAssistantMessage()
-        messages.value.push(stepMessage)
-        enqueueAssistantText(stepMessage, chunk)
+        enqueueAssistantText(null, chunk)
         return
       }
 
@@ -348,7 +378,7 @@ function submitMessage() {
     },
   })
 
-  scrollToBottom()
+  scrollToBottom(true)
 }
 
 function handleEnter(event) {
@@ -404,52 +434,54 @@ watch(
         </div>
       </header>
 
-      <div ref="messageListRef" class="message-list">
-        <article
-          v-for="message in messages"
-          :key="message.id"
-          class="message-row"
-          :class="message.role"
-        >
-          <div class="message-bubble">
-            <span class="message-role">
-              {{ message.role === 'user' ? '我' : 'AI' }}
-            </span>
-            <p>{{ message.content }}</p>
-          </div>
-        </article>
-      </div>
-
-      <footer class="composer">
-        <textarea
-          v-model="draft"
-          class="composer-input"
-          rows="4"
-          :placeholder="placeholder"
-          @keydown.enter="handleEnter"
-        />
-        <div class="composer-actions">
-          <span class="hint">Enter 发送，Shift + Enter 换行</span>
-          <div class="composer-buttons">
-            <button
-              v-if="showPauseButton"
-              class="reset-button"
-              type="button"
-              @click="toggleReplyPlayback"
-            >
-              {{ isPaused ? '继续回复' : '暂停回复' }}
-            </button>
-            <button
-              class="send-button"
-              type="button"
-              :disabled="isStreaming || !draft.trim()"
-              @click="submitMessage"
-            >
-              {{ isStreaming ? '生成中...' : '发送消息' }}
-            </button>
-          </div>
+      <div class="chat-body">
+        <div ref="messageListRef" class="message-list" @scroll="handleMessageScroll">
+          <article
+            v-for="message in messages"
+            :key="message.id"
+            class="message-row"
+            :class="message.role"
+          >
+            <div class="message-bubble">
+              <span class="message-role">
+                {{ message.role === 'user' ? '我' : 'AI' }}
+              </span>
+              <p>{{ message.content }}</p>
+            </div>
+          </article>
         </div>
-      </footer>
+
+        <footer class="composer">
+          <textarea
+            v-model="draft"
+            class="composer-input"
+            rows="3"
+            :placeholder="placeholder"
+            @keydown.enter="handleEnter"
+          />
+          <div class="composer-actions">
+            <span class="hint">Enter 发送，Shift + Enter 换行</span>
+            <div class="composer-buttons">
+              <button
+                v-if="showPauseButton"
+                class="reset-button"
+                type="button"
+                @click="toggleReplyPlayback"
+              >
+                {{ isPaused ? '继续回复' : '暂停回复' }}
+              </button>
+              <button
+                class="send-button"
+                type="button"
+                :disabled="isStreaming || !draft.trim()"
+                @click="submitMessage"
+              >
+                {{ isStreaming ? '生成中...' : '发送消息' }}
+              </button>
+            </div>
+          </div>
+        </footer>
+      </div>
 
       <SiteFooter compact />
     </section>

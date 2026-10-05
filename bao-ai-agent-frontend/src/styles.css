@@ -132,8 +132,7 @@ button {
 .overview-card,
 .app-card,
 .chat-header,
-.message-list,
-.composer {
+.chat-body {
   border: 1px solid var(--surface-border);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.04)),
@@ -196,11 +195,11 @@ button {
 }
 
 .hero h1 {
-  max-width: 12ch;
+  max-width: 24ch;
   margin: 0;
-  font-size: clamp(42px, 6vw, 84px);
-  line-height: 0.96;
-  letter-spacing: -0.055em;
+  font-size: clamp(28px, 3.4vw, 46px);
+  line-height: 1.14;
+  letter-spacing: -0.03em;
 }
 
 .hero-copy {
@@ -471,19 +470,20 @@ button {
   height: 100dvh;
   max-height: 100vh;
   max-height: 100dvh;
-  padding: 24px 0;
+  padding: 20px 0;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto auto;
-  gap: 18px;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 14px;
   overflow: hidden;
 }
 
 .chat-header {
   display: flex;
   justify-content: space-between;
-  gap: 24px;
-  padding: 24px;
-  border-radius: 30px;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 22px;
+  border-radius: 24px;
 }
 
 .header-main {
@@ -494,15 +494,15 @@ button {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 18px;
+  margin-bottom: 12px;
 }
 
 .chat-header h1 {
-  max-width: 12ch;
+  max-width: 30ch;
   margin: 0;
-  font-size: clamp(30px, 4vw, 54px);
-  line-height: 1;
-  letter-spacing: -0.05em;
+  font-size: clamp(20px, 2.3vw, 30px);
+  line-height: 1.2;
+  letter-spacing: -0.03em;
 }
 
 .status-pill {
@@ -593,14 +593,22 @@ button {
   transform: translateY(-1px);
 }
 
+.chat-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+}
+
 .message-list {
+  flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   padding: clamp(18px, 2.4vw, 28px);
-  border-radius: var(--radius-xl);
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
 }
@@ -663,16 +671,18 @@ button {
 }
 
 .composer {
-  position: sticky;
-  bottom: 0;
-  z-index: 2;
+  flex: 0 0 auto;
   padding: 16px;
   padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
-  border-radius: 28px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(6, 13, 21, 0.42);
 }
 
 .site-footer {
+  width: min(calc(100% - 32px), var(--container-width));
+  margin: 0 auto 28px;
   border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
     rgba(8, 17, 27, 0.78);
@@ -682,34 +692,35 @@ button {
 
 .site-footer-grid {
   display: grid;
-  grid-template-columns: 1.2fr 0.8fr 0.9fr;
-  gap: 24px;
-  padding: 26px;
+  grid-template-columns: 1.35fr 0.7fr 0.95fr;
+  gap: 16px 28px;
+  padding: 18px 24px;
 }
 
 .site-footer h2,
 .site-footer h3 {
-  margin: 0 0 12px;
+  margin: 0 0 8px;
   letter-spacing: -0.03em;
 }
 
 .site-footer h2 {
-  font-size: 26px;
+  font-size: 18px;
 }
 
 .site-footer h3 {
-  font-size: 18px;
+  font-size: 14px;
 }
 
 .site-footer p,
 .site-footer span {
   margin: 0;
   color: var(--text-soft);
+  font-size: 14px;
 }
 
 .site-footer section {
   display: grid;
-  gap: 10px;
+  gap: 6px;
 }
 
 .site-footer-links,
@@ -728,12 +739,15 @@ button {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 18px;
-  padding: 16px 26px 22px;
+  gap: 14px;
+  padding: 12px 24px 16px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 13px;
 }
 
 .site-footer.compact {
+  width: 100%;
+  margin: 0;
   border-radius: 20px;
 }
 
@@ -799,7 +813,7 @@ button {
   }
 
   .hero h1 {
-    max-width: 13ch;
+    max-width: 26ch;
   }
 
   .hero-metrics {
@@ -812,6 +826,7 @@ button {
 
   .chat-header {
     flex-direction: column;
+    align-items: stretch;
   }
 
   .header-side {
@@ -850,8 +865,7 @@ button {
   .overview-card,
   .app-card,
   .chat-header,
-  .message-list,
-  .composer {
+  .chat-body {
     border-radius: 24px;
   }
 
@@ -881,7 +895,7 @@ button {
   }
 
   .message-list {
-    height: 100%;
+    flex: 1 1 auto;
     min-height: 0;
     overflow-y: scroll;
     touch-action: pan-y;
@@ -949,7 +963,7 @@ button {
   }
 
   .hero h1 {
-    font-size: clamp(34px, 12vw, 52px);
+    font-size: clamp(24px, 7vw, 32px);
   }
 
   .hero-chip-row {
