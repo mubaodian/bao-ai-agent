@@ -10,7 +10,8 @@ import org.springframework.stereotype.Component;
 /**
  * Spring AI 框架调用AI大模型(阿里)
  */
-@Component
+//@Component
+@Deprecated
 public class SpringAiAiInvoke implements CommandLineRunner {
     @Resource //该注解是优先以名称匹配Bean，若未找到则按类型匹配
     private ChatModel dashscopeChatModel;

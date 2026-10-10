@@ -38,3 +38,4 @@ build/
 tmp
 /src/main/resources/mcp-servers.json
 /src/main/resources/application-prod.yml
+/src/main/resources/mcp-servers-prod.json
